@@ -23,10 +23,10 @@ func TestRead(t *testing.T) {
 				"INSERT INTO foo values (1, 2, 3);\n",
 		},
 		{
-			name:     "undefined column in empty string",
+			name:     "undefined column is empty string",
 			in:       "col2,col1,col3\ntwo,one\n",
-			template: `{{.col1}} + {{.col2}} + {{.col3}} + {{.unknown}}`,
-			out:      "one + two +  + \n",
+			template: `{{.col1}} + {{.col2}} + {{.col3}} + {{.unknown}} + {{._4}}`,
+			out:      "one + two +  +  + \n",
 		},
 		{
 			name: "but in strict mode undefined column is error",
@@ -35,6 +35,15 @@ func TestRead(t *testing.T) {
 			},
 			in:       "col2,col1,col3\ntwo,one\n",
 			template: `INSERT INTO foo values ({{.col1}}, {{.col2}}, {{.col3}})`,
+			wantErr:  true,
+		},
+		{
+			name: "in strict mode undefined number column is error",
+			cfg: Config{
+				StrictMode: true,
+			},
+			in:       "col2,col1,col3\ntwo,one\n",
+			template: `{{._3}}`,
 			wantErr:  true,
 		},
 		{
