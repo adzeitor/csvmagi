@@ -86,14 +86,19 @@ func (magi *Magi) ReadAndExecute(r io.Reader, w io.Writer) error {
 type header []string
 
 func keyVariants(index int, key string) []string {
-	underscored := strings.ReplaceAll(key, " ", "_")
+	// FIXME: this leads to converting Foo+Bar and Foo-Bar to the
+	// same varibales Foo_Bar, Foo_Bar.
+	key = strings.ReplaceAll(key, " ", "_")
+	key = strings.ReplaceAll(key, "+", "_")
+	key = strings.ReplaceAll(key, "-", "_")
+	key = strings.ReplaceAll(key, ".", "_")
 	// FIXME: what about combination of underscore lower case and upper case
 	// like key FoObAr? Maybe add proper lookup to template but currently we only
 	// have option with function which makes templates very complex.
 	return []string{
-		underscored,
-		strings.ToLower(underscored),
-		strings.ToUpper(underscored),
+		key,
+		strings.ToLower(key),
+		strings.ToUpper(key),
 		// support special column number like _1
 		fmt.Sprintf("_%d", index+1),
 	}

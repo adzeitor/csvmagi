@@ -52,6 +52,12 @@ func TestRead(t *testing.T) {
 			template: `{{.First_name}} {{.Last_name}} and {{.first_name}} {{.LAST_NAME}} again and link by number {{._1}} {{._2}}`,
 			out:      "John Smith and John Smith again and link by number John Smith\n",
 		},
+		{
+			name:     "support variables with reserved symbols",
+			in:       "Foo+Bar,Bar-Foo,Bar.Bar\n1,2,3\n",
+			template: `{{.Foo_Bar}} {{.Bar_Foo}} {{.Bar_Bar}}`,
+			out:      "1 2 3\n",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
