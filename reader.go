@@ -127,3 +127,18 @@ func readHeader(r *csv.Reader) (header, error) {
 	}
 	return record, nil
 }
+
+func PrintExample(r io.Reader) {
+	csvReader := csv.NewReader(r)
+	csvReader.FieldsPerRecord = -1
+	header, err := readHeader(csvReader)
+	if err != nil {
+		panic(err)
+	}
+
+	for i, column := range header {
+		variants := keyVariants(i, column)
+		fmt.Printf("{{.%s}} ", variants[0])
+	}
+	fmt.Println()
+}
