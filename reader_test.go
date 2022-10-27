@@ -17,15 +17,22 @@ func TestRead(t *testing.T) {
 	}{
 		{
 			name:     "success",
-			in:       "col2,col1,col3\ntwo,one,three\n2,1,3\n",
-			template: `INSERT INTO foo values ({{.col1}}, {{.col2}}, {{.col3}});`,
+			in:       "col2,col 1,col+3\ntwo,one,three\n2,1,3\n",
+			template: `INSERT INTO foo values ({ col 1 }, { col2 }, {col+3});`,
+			out: "INSERT INTO foo values (one, two, three);\n" +
+				"INSERT INTO foo values (1, 2, 3);\n",
+		},
+		{
+			name:     "success with column number variables",
+			in:       "col2,col 1,col+3\none,two,three\n1,2,3\n",
+			template: `INSERT INTO foo values ({ _1 }, { _2 }, {_3});`,
 			out: "INSERT INTO foo values (one, two, three);\n" +
 				"INSERT INTO foo values (1, 2, 3);\n",
 		},
 		{
 			name:     "undefined column is empty string",
 			in:       "col2,col1,col3\ntwo,one\n",
-			template: `{{.col1}} + {{.col2}} + {{.col3}} + {{.unknown}} + {{._4}}`,
+			template: `{col1} + {col2} + {col3} + {unknown} + {_4}`,
 			out:      "one + two +  +  + \n",
 		},
 		{
@@ -49,13 +56,13 @@ func TestRead(t *testing.T) {
 		{
 			name:     "support variables with spaces and in lower case",
 			in:       "First name,Last name\nJohn,Smith\n",
-			template: `{{.First_name}} {{.Last_name}} and {{.first_name}} {{.LAST_NAME}} again and link by number {{._1}} {{._2}}`,
+			template: `{First NAME} {last name} and {first NaMe} {LAST NAME} again and link by number {_1} {_2}`,
 			out:      "John Smith and John Smith again and link by number John Smith\n",
 		},
 		{
 			name:     "support variables with reserved symbols",
 			in:       "Foo+Bar,Bar-Foo,Bar.Bar\n1,2,3\n",
-			template: `{{.Foo_Bar}} {{.Bar_Foo}} {{.Bar_Bar}}`,
+			template: `{Foo+Bar} {Bar-Foo} {Bar.Bar}`,
 			out:      "1 2 3\n",
 		},
 	}

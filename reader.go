@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
-	"text/template"
 )
 
 var (
@@ -24,23 +22,13 @@ type Config struct {
 
 type Magi struct {
 	Config   Config
-	Template *template.Template
+	Template string
 }
 
 func New(tmpl string, cfg Config) (Magi, error) {
-	t, err := template.New("template").Parse(tmpl)
-	if err != nil {
-		return Magi{}, err
-	}
-	if cfg.StrictMode {
-		t.Option("missingkey=error")
-	} else {
-		t.Option("missingkey=zero")
-	}
-
 	magi := Magi{
 		Config:   cfg,
-		Template: t,
+		Template: tmpl,
 	}
 	return magi, nil
 }
@@ -69,13 +57,9 @@ func (magi *Magi) ReadAndExecute(r io.Reader, w io.Writer) error {
 			return fmt.Errorf("line %d: error %w\n", line, err)
 		}
 
-		err = magi.Template.Execute(w, data)
-		if err != nil {
-			return fmt.Errorf("line %d: error %w\n", line, err)
-		}
+		result := Execute(magi.Template, data)
 
-		// add new line
-		_, err = w.Write([]byte("\n"))
+		_, err = w.Write([]byte(result + "\n"))
 		if err != nil {
 			return err
 		}
@@ -86,20 +70,8 @@ func (magi *Magi) ReadAndExecute(r io.Reader, w io.Writer) error {
 type header []string
 
 func keyVariants(index int, key string) []string {
-	// FIXME: this leads to converting Foo+Bar and Foo-Bar to the
-	// same varibales Foo_Bar, Foo_Bar.
-	key = strings.ReplaceAll(key, " ", "_")
-	key = strings.ReplaceAll(key, "+", "_")
-	key = strings.ReplaceAll(key, "-", "_")
-	key = strings.ReplaceAll(key, ".", "_")
-	// FIXME: what about combination of underscore lower case and upper case
-	// like key FoObAr? Maybe add proper lookup to template but currently we only
-	// have option with function which makes templates very complex.
 	return []string{
 		key,
-		strings.ToLower(key),
-		strings.ToUpper(key),
-		// support special column number like _1
 		fmt.Sprintf("_%d", index+1),
 	}
 }
@@ -141,9 +113,9 @@ func PrintExample(r io.Reader) {
 		panic(err)
 	}
 
-	for i, column := range header {
-		variants := keyVariants(i, column)
-		fmt.Printf("{{.%s}} ", variants[0])
+	fmt.Print("   '")
+	for _, column := range header {
+		fmt.Printf("{%s} ", column)
 	}
-	fmt.Println()
+	fmt.Println("'")
 }
